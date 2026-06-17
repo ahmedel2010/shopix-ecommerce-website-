@@ -24,7 +24,6 @@ Shopix is a premium, modern, and fully interactive e-commerce web application. B
 
 ---
 
-## 📸 Screenshots
 
 ### 🏠 Home Page - Hero & Banner
 Detailed view of the premium homepage introduction and hero slide.
