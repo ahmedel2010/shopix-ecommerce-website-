@@ -1,20 +1,27 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Star, Heart, ChevronLeft, ChevronRight, ArrowUp } from 'lucide-react';
+import { ArrowRight, Star, Heart, ChevronLeft, ChevronRight, ArrowUp, GitCompareArrows } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState, useEffect } from 'react';
-import { fetchProducts, fetchCategories } from '../lib/api';
+import { useState, useEffect, useMemo } from 'react';
+import { useProducts } from '../hooks/useProductQueries';
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
-import { Product } from '../types';
+import { useComparison } from '../context/ComparisonContext';
 import { cn } from '../lib/utils';
 import { useSEO, ORGANIZATION_STRUCTURED_DATA, WEBSITE_STRUCTURED_DATA } from '../hooks/useSEO';
+import AnnouncementBar from '../components/ui/AnnouncementBar';
 
 export default function Home() {
-    const [bestSellers, setBestSellers] = useState<Product[]>([]);
-    const [categories, setCategories] = useState<{ name: string; image: string; label: string; slug: string }[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: allProducts = [], isLoading: loading } = useProducts();
+    const bestSellers = useMemo(() => allProducts.slice(4, 12), [allProducts]);
+    const categories = useMemo(() => [
+        { name: 'Classic Wear', label: 'Classic Wear', slug: 'classic-wear', image: '/images/img_23.jpg' },
+        { name: 'Electronics', label: 'Electronics Gallery', slug: 'mobile-accessories', image: '/images/img_24.jpg' },
+        { name: "Men's Clothing", label: "Men's Wear", slug: 'mens-shirts', image: '/images/img_25.jpg' },
+        { name: 'Home Decoration', label: 'Curated Living', slug: 'home-decoration', image: '/images/img_27.jpg' },
+    ], []);
     const { addToCart, cart } = useCart();
     const { toggleFavorite, isFavorite } = useFavorites();
+    const { toggleCompare, isInCompare } = useComparison();
     const navigate = useNavigate();
 
     useSEO({
@@ -47,44 +54,6 @@ export default function Home() {
         if (bestSellers.length === 0) return;
         setIsTransitioning(true);
         setSliderIndex(prev => prev + 1);
-    };
-
-    const AnnouncementBar = () => {
-        const items = ["Limited Time: Free Shipping on Orders Over $150", "Premium Classic Wear Collection", "Established Excellence Since 1995", "New Arrivals Every Week", "Handcrafted Quality & Design", "Global Shipping Available"
-        ];
-
-        const MarqueeContent = () => (
-            <div className="flex flex-nowrap shrink-0">
-                {items.map((item, idx) => (
-                    <div key={idx} className="flex items-center shrink-0 pr-24 md:pr-40">
-                        <span className="text-[11px] md:text-[14px] font-black uppercase text-black whitespace-nowrap">
-                            {item}
-                        </span>
-                        <div className="ml-24 md:ml-40 opacity-40">
-                            <Star className="w-3.5 h-3.5 fill-current text-black" />
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-
-        return (
-            <div className="bg-[#fbbf24] py-2.5 overflow-hidden flex border-y border-black/10 select-none relative z-20 w-full">
-                <motion.div
-                    className="flex flex-nowrap"
-                    animate={{ x: ["0%", "-50%"] }}
-                    transition={{
-                        duration: 50,
-                        repeat: Infinity,
-                        ease: "linear",
-                        repeatType: "loop"
-                    }}
-                >
-                    <MarqueeContent />
-                    <MarqueeContent />
-                </motion.div>
-            </div>
-        );
     };
 
     const prevSlide = () => {
@@ -123,40 +92,6 @@ export default function Home() {
 
         return () => clearInterval(timer);
     }, [sliderIndex, bestSellers.length]);
-
-    useEffect(() => {
-        async function loadData() {
-            try {
-                const [allProducts, allCategories] = await Promise.all([
-                    fetchProducts(20),
-                    fetchCategories()
-                ]);
-
-                setBestSellers(allProducts.slice(4, 12));
-
-                const staticImages = [
-                    '/images/img_23.jpg',
-                    '/images/img_24.jpg',
-                    '/images/img_25.jpg',
-                    '/images/img_26.jpg'
-                ];
-
-                const featuredCats = [
-                    { name: 'Classic Wear', label: 'Classic Wear', slug: 'classic-wear', image: staticImages[0] },
-                    { name: 'Electronics', label: 'Electronics Gallery', slug: 'mobile-accessories', image: staticImages[1] },
-                    { name: "Men's Clothing", label: "Men's Wear", slug: 'mens-shirts', image: staticImages[2] },
-                    { name: 'Home Decoration', label: 'Curated Living', slug: 'home-decoration', image: '/images/img_27.jpg' }
-                ];
-
-                setCategories(featuredCats);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        loadData();
-    }, []);
 
     return (
         <div className="flex flex-col w-full bg-surface transition-colors duration-300">
@@ -341,6 +276,17 @@ export default function Home() {
                                                         <Heart className={cn("w-5 h-5", isFavorite(product.id) && "fill-current")} />
                                                     </motion.button>
 
+                                                    <motion.button
+                                                        whileHover={{ scale: 1.15 }}
+                                                        whileTap={{ scale: 0.9 }}
+                                                        onClick={() => toggleCompare(product)}
+                                                        className={cn("absolute top-5 left-5 p-3 backdrop-blur-sm rounded-full transition-all duration-500 shadow-xl z-20",
+                                                            isInCompare(product.id) ? "bg-primary text-white opacity-100" : "bg-surface/90 text-on-surface opacity-0 group-hover/item:opacity-100 hover:bg-primary hover:text-white"
+                                                        )}
+                                                    >
+                                                        <GitCompareArrows className="w-5 h-5" />
+                                                    </motion.button>
+
                                                     <div className="absolute inset-0 flex items-end p-6 opacity-0 group-hover/item:opacity-100 transition-all duration-700 ease-out z-10 bg-gradient-to-t from-black/20 to-transparent">
                                                         <motion.button
                                                             whileHover={isInCart ? {} : { scale: 1.04, y: -2 }}
@@ -401,15 +347,19 @@ export default function Home() {
             </section>
 
 
-            <section className="py-40 bg-surface transition-colors duration-300">
-                <div className="max-w-5xl mx-auto px-10 border-l border-on-surface pl-20 space-y-12">
+            <section className="py-20 sm:py-28 lg:py-40 bg-surface transition-colors duration-300">
+                <div className="max-w-5xl mx-auto px-6 sm:px-10 md:border-l md:border-on-surface md:pl-12 lg:pl-20 space-y-8 sm:space-y-10 lg:space-y-12 text-center md:text-left">
                     <span className="text-[10px] uppercase text-on-surface-variant font-bold">The Philosophy</span>
-                    <h2 className="text-7xl font-bold text-on-surface">Design is the silent ambassador of your brand.</h2>
-                    <p className="text-xl text-on-surface-variant max-w-2xl font-light">
+                    <h2 className="text-3xl sm:text-5xl lg:text-7xl font-bold text-on-surface leading-[1.05]">
+                        Design is the silent ambassador of your brand.
+                    </h2>
+                    <p className="text-sm sm:text-lg lg:text-xl text-on-surface-variant max-w-2xl font-light mx-auto md:mx-0">
                         We believe that products should be as honest as they are beautiful. Our commitment to high-end craftsmanship ensures that every piece tells a story of precision, purpose, and lasting value.
                     </p>
-                    <div className="pt-10">
-                        <Link to="/about" className="text-xs font-bold uppercase border-b border-on-surface pb-2 text-on-surface">Learn Our Story</Link>
+                    <div className="pt-4 sm:pt-6 lg:pt-10">
+                        <Link to="/about" className="text-xs font-bold uppercase border-b border-on-surface pb-2 text-on-surface">
+                            Learn Our Story
+                        </Link>
                     </div>
                 </div>
             </section>

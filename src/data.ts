@@ -2,7 +2,7 @@ import { Product } from './types';
 
 export const PRODUCTS: Product[] = [
   {
-    id: 'mock-1',
+    id: 'sp-1',
     name: 'SonicZen Pro Wireless Noise-Cancelling Headphones',
     category: 'mobile-accessories',
     price: 299.00,
@@ -31,17 +31,25 @@ export const PRODUCTS: Product[] = [
     },
     features: [
       {
-        title: 'Immersive Audio',
-        description: 'Hi-Res Audio Wireless support and LDAC codec for the best possible sound quality.'
+        title: '45mm LCP Drivers',
+        description: 'Liquid crystal polymer diaphragms in the SonicZen Pro deliver studio-grade clarity from 4Hz to 40kHz.'
       },
       {
-        title: 'Smart Features',
-        description: 'Proximity sensors, touch controls, and multipoint Bluetooth connection for two devices.'
+        title: '700Hz ANC Processor',
+        description: 'Adaptive noise cancellation samples ambient sound 700 times per second and adjusts in real time.'
+      },
+      {
+        title: '40-Hour Battery',
+        description: 'A full charge lasts 40 hours with ANC on. Five minutes on USB-C adds three hours of playback.'
+      },
+      {
+        title: 'LDAC Hi-Res Audio',
+        description: 'Stream lossless audio over Bluetooth 5.3 with LDAC codec support and dual-device multipoint pairing.'
       }
     ]
   },
   {
-    id: 'mock-2',
+    id: 'sp-2',
     name: 'Minimalist Silver Watch',
     category: 'mens-watches',
     price: 249.00,
@@ -69,17 +77,25 @@ export const PRODUCTS: Product[] = [
     },
     features: [
       {
-        title: 'Sapphire Crystal',
-        description: 'Constructed with premium scratch-resistant window glass.'
+        title: 'Miyota 9039 Movement',
+        description: 'Japanese quartz movement rated ±15 seconds per month — no manual winding required.'
       },
       {
-        title: 'Calfskin Leather',
-        description: 'Hypoallergenic premium leather straps that age beautifully.'
+        title: '5ATM Water Seal',
+        description: 'Swim-safe to 50 metres. The screw-down crown keeps moisture out during daily wear.'
+      },
+      {
+        title: 'Italian Calfskin Strap',
+        description: 'Vegetable-tanned leather that develops a unique patina. Quick-release pins for easy swaps.'
+      },
+      {
+        title: 'Sapphire Crystal Face',
+        description: 'Mohs 9 hardness crystal resists scratches from keys, desks, and everyday contact.'
       }
     ]
   },
   {
-    id: 'mock-3',
+    id: 'sp-3',
     name: 'Aura Wireless Pro',
     category: 'mobile-accessories',
     price: 249.00,
@@ -106,17 +122,25 @@ export const PRODUCTS: Product[] = [
     },
     features: [
       {
-        title: 'Studio Tuned',
-        description: 'Impeccable balance curated for professional studio mixing and relaxed daily listening.'
+        title: '40mm Neodymium Drivers',
+        description: 'Neodymium magnets in the Aura Wireless Pro push 10Hz–22kHz response with low harmonic distortion.'
       },
       {
-        title: 'Ergonomic Pads',
-        description: 'High elasticity memory foam ear cups for maximum long-wear comfort.'
+        title: 'Studio Reference Tuning',
+        description: 'EQ curve calibrated against studio monitors — flat mids, controlled bass, open treble.'
+      },
+      {
+        title: '30-Hour Playtime',
+        description: 'Thirty hours per charge with ANC off, twenty-four with ANC on. Fold-flat hinge for travel.'
+      },
+      {
+        title: 'Memory Foam Ear Cups',
+        description: 'Slow-rebound foam distributes pressure evenly — comfortable through multi-hour sessions.'
       }
     ]
   },
   {
-    id: 'mock-4',
+    id: 'sp-4',
     name: 'Precision Run Pro',
     category: 'mens-shoes',
     price: 120.00,
@@ -143,12 +167,20 @@ export const PRODUCTS: Product[] = [
     },
     features: [
       {
-        title: 'AeroKnit Mesh',
-        description: 'Ultra-breathable weave pattern that regulates temperature and expels vapor.'
+        title: 'AeroKnit Upper',
+        description: 'Engineered mesh zones over the toe box and arch — 30% more airflow than standard knit uppers.'
       },
       {
-        title: 'Propulsive Energy',
-        description: 'Advanced foam composites return maximum energy with each stride.'
+        title: 'Carbon Rubber Outsole',
+        description: 'High-abrasion carbon compound grips wet asphalt and track rubber at every stride angle.'
+      },
+      {
+        title: '210g Race Weight',
+        description: 'One of the lightest in its class at 210g — less shoe means faster turnover on tempo runs.'
+      },
+      {
+        title: 'Propulsive Midsole',
+        description: 'Dual-density foam stack returns 78% of impact energy — noticeable spring on toe-off.'
       }
     ]
   }

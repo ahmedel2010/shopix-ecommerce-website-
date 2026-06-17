@@ -3,13 +3,19 @@ import { MapPin, Truck, CreditCard, Lock, ChevronRight, Phone, Info } from 'luci
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useCoupon } from '../context/CouponContext';
+import PromoCodeInput from '../components/ui/PromoCodeInput';
 import { useSEO } from '../hooks/useSEO';
 
 export default function Checkout() {
  const { cart, totalPrice } = useCart();
+ const { discount, freeShipping } = useCoupon();
  const [deliveryMethod, setDeliveryMethod] = useState<'standard' | 'express'>('standard');
- const tax = totalPrice * 0.08;
- const shippingCost = deliveryMethod === 'express' ? 15 : 0;
+
+ const subtotalAfterDiscount = Math.max(totalPrice - discount, 0);
+ const tax = subtotalAfterDiscount * 0.08;
+ const shippingCost = deliveryMethod === 'express' ? (freeShipping ? 0 : 15) : 0;
+ const orderTotal = subtotalAfterDiscount + tax + shippingCost;
 
  useSEO({
   title: 'Secure Checkout',
@@ -35,19 +41,19 @@ export default function Checkout() {
  </div>
  <div className="space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Last Name</label>
- <input type="text" placeholder="elsayed" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input type="text" placeholder="Elsayed" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
  </div>
  <div className="md:col-span-2 space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Address Line 1</label>
- <input type="text" placeholder="123 ramdan street" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input type="text" placeholder="123 Ramadan Street" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
  </div>
  <div className="space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">City</label>
- <input type="text" placeholder="cairo" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input type="text" placeholder="Cairo" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
  </div>
  <div className="space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Postal Code</label>
- <input type="text" placeholder="3753450" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input type="text" placeholder="11511" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
  </div>
  <div className="md:col-span-2 space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Phone Number</label>
@@ -80,7 +86,9 @@ export default function Checkout() {
  >
  <input type="radio" name="delivery" checked={deliveryMethod === 'express'} onChange={() => {}} className="hidden" />
  <span className="font-bold text-2xl mb-1 text-on-surface">Express</span>
- <span className="text-[10px] uppercase text-on-surface-variant font-bold">Next Day Arrival — $15.00</span>
+ <span className="text-[10px] uppercase text-on-surface-variant font-bold">
+ Next Day Arrival — {freeShipping ? 'Free' : '$15.00'}
+ </span>
  </label>
  </div>
  </section>
@@ -137,9 +145,19 @@ export default function Checkout() {
  <span>Subtotal</span>
  <span className="text-on-surface text-sm">${totalPrice.toFixed(2)}</span>
  </div>
+ {discount > 0 && (
+ <div className="flex justify-between text-emerald-700 dark:text-emerald-400 text-[10px] uppercase font-bold">
+ <span>Discount</span>
+ <span className="text-sm">−${discount.toFixed(2)}</span>
+ </div>
+ )}
  <div className="flex justify-between text-on-surface-variant text-[10px] uppercase font-bold">
  <span>Shipping</span>
- <span className="text-on-surface text-sm">{deliveryMethod === 'express' ? '$15.00' : 'Free'}</span>
+ <span className="text-on-surface text-sm">
+ {deliveryMethod === 'express'
+   ? freeShipping ? 'Free (promo)' : '$15.00'
+   : 'Free'}
+ </span>
  </div>
  <div className="flex justify-between text-on-surface-variant text-[10px] uppercase font-bold">
  <span>Tax (8%)</span>
@@ -147,9 +165,11 @@ export default function Checkout() {
  </div>
  <div className="flex justify-between items-center pt-8 text-on-surface border-t border-on-surface">
  <span className="text-base font-bold uppercase">Total</span>
- <span className="text-3xl font-bold">${(totalPrice + tax + shippingCost).toFixed(2)}</span>
+ <span className="text-3xl font-bold">${orderTotal.toFixed(2)}</span>
  </div>
  </div>
+
+ <PromoCodeInput />
 
  <button className="luxury-button w-full !py-6 text-sm">
  Finalize Order

@@ -1,19 +1,25 @@
 import { useParams, Link } from 'react-router-dom';
-import { Star, ChevronRight, ChevronLeft, Minus, Plus, ShoppingBag, Heart, Truck, ShieldCheck } from 'lucide-react';
+import { Star, ChevronRight, ChevronLeft, Minus, Plus, ShoppingBag, Heart, Truck, ShieldCheck, GitCompareArrows } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '../lib/utils';
-import { fetchProductById, fetchProducts } from '../lib/api';
+import { useProduct, useProducts } from '../hooks/useProductQueries';
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
-import { Product } from '../types';
+import { useComparison } from '../context/ComparisonContext';
 import { useSEO, buildProductStructuredData } from '../hooks/useSEO';
 
 export default function ProductDetail() {
  const { id } = useParams<{ id: string }>();
- const [product, setProduct] = useState<Product | null>(null);
- const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
- const [loading, setLoading] = useState(true);
+ const { data: product = null, isLoading: loading } = useProduct(id ?? '');
+ const { data: allProducts = [] } = useProducts();
+ const relatedProducts = useMemo(() => {
+ if (!product || !id) return [];
+ const matchingCategory = allProducts.filter(p => p.id !== id && p.category === product.category);
+ return matchingCategory.length > 0
+ ? matchingCategory
+ : allProducts.filter(p => p.id !== id).slice(0, 10);
+ }, [product, allProducts, id]);
  const [quantity, setQuantity] = useState(1);
  const [activeTab, setActiveTab] = useState('Product Description');
  const [selectedImage, setSelectedImage] = useState(0);
@@ -22,6 +28,7 @@ export default function ProductDetail() {
 
  const { addToCart, cart } = useCart();
  const { toggleFavorite, isFavorite } = useFavorites();
+ const { toggleCompare, isInCompare, compareList, isReady } = useComparison();
  const sliderRef = useRef<HTMLDivElement>(null);
 
  useSEO({
@@ -72,33 +79,10 @@ export default function ProductDetail() {
  }, [relatedProducts, id]);
 
  useEffect(() => {
- async function loadData() {
  if (!id) return;
- setLoading(true);
  setSelectedImage(0);
  setSelectedColor(0);
  setQuantity(1);
- try {
- const [productData, allProducts] = await Promise.all([
- fetchProductById(id),
- fetchProducts(),
- ]);
- if (productData) {
- setProduct(productData);
- const matchingCategory = allProducts.filter(p => p.id !== id && p.category === productData.category);
- setRelatedProducts(
- matchingCategory.length > 0
- ? matchingCategory
- : allProducts.filter(p => p.id !== id).slice(0, 10)
- );
- }
- } catch (error) {
- console.error('Error fetching product data:', error);
- } finally {
- setLoading(false);
- }
- }
- loadData();
  window.scrollTo(0, 0);
  }, [id]);
 
@@ -292,7 +276,31 @@ export default function ProductDetail() {
  <Heart className={cn('w-4 h-4 transition-transform duration-300', isFavorite(product.id) ? 'fill-current scale-110' : '')} />
  Favourite
  </motion.button>
+ <motion.button
+ onClick={() => toggleCompare(product)}
+ whileHover={{ scale: 1.08 }}
+ whileTap={{ scale: 0.97 }}
+ transition={{ duration: 0.4, ease: 'easeOut' }}
+ className={cn(
+ 'flex-1 py-4 border text-sm font-bold flex items-center justify-center gap-2',
+ isInCompare(product.id)
+ ? 'bg-primary/10 border-primary/30 text-primary'
+ : 'bg-surface border-outline-variant text-on-surface hover:bg-surface-container'
+ )}
+ >
+ <GitCompareArrows className="w-4 h-4" />
+ {isInCompare(product.id) ? 'In Compare' : 'Compare'}
+ </motion.button>
  </div>
+
+ {isReady && (
+ <Link
+ to={`/compare?ids=${compareList.map(p => p.id).join(',')}`}
+ className="block w-full text-center py-3 text-[10px] font-bold uppercase text-primary border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
+ >
+ View side-by-side comparison
+ </Link>
+ )}
 
  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-outline-variant">
  <div className="flex items-center gap-3">
@@ -553,6 +561,18 @@ export default function ProductDetail() {
  )}
  >
  <Heart className={cn('w-4 h-4', isFavorite(item.id) && 'fill-current')} />
+ </motion.button>
+
+ <motion.button
+ whileHover={{ scale: 1.15 }}
+ whileTap={{ scale: 0.9 }}
+ onClick={e => { e.preventDefault(); toggleCompare(item); }}
+ className={cn(
+ 'absolute top-4 left-4 p-2.5 backdrop-blur-sm rounded-full transition-all duration-500 shadow-xl z-20',
+ isInCompare(item.id) ? 'bg-primary text-white opacity-100' : 'bg-surface/90 text-on-surface opacity-0 group-hover/item:opacity-100 hover:bg-primary hover:text-white'
+ )}
+ >
+ <GitCompareArrows className="w-4 h-4" />
  </motion.button>
 
  <div className="absolute inset-0 flex items-end p-6 opacity-0 group-hover/item:opacity-100 transition-all duration-700 ease-out z-10 bg-gradient-to-t from-black/20 to-transparent">

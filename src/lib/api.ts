@@ -3,6 +3,221 @@ import { PRODUCTS } from '../data';
 
 const BASE_URL = 'https://dummyjson.com';
 
+function blockedTitle(title: string): boolean {
+  const t = title.toLowerCase();
+  return (t.includes('mens casual') && t.includes('slim fit') && t.includes('t-shirt'))
+    || t.includes('mens casual premium slim fit t-shirts');
+}
+
+function hashSeed(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) - h) + str.charCodeAt(i);
+  return Math.abs(h);
+}
+
+function buildProductFeatures(product: Product): { title: string; description: string }[] {
+  const { name, brand, category, description, specifications, id } = product;
+  const brandName = brand || name.split(' ')[0];
+  const specs = specifications ?? {};
+  const specEntries = Object.entries(specs);
+  const cat = category.toLowerCase();
+  const nameLower = name.toLowerCase();
+  const features: { title: string; description: string }[] = [];
+  const usedTitles = new Set<string>();
+
+  const add = (title: string, desc: string) => {
+    const key = title.toLowerCase();
+    if (usedTitles.has(key) || features.length >= 4) return;
+    usedTitles.add(key);
+    features.push({ title, description: desc });
+  };
+
+  const nameWords = name.split(/[\s–-]+/).filter(w => w.length > 3 && !/^(the|with|and|for|from|your)$/i.test(w));
+
+  const sentences = description
+    .split(/[.!?\n]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 25);
+
+  if (sentences.length > 0) {
+    const idxA = hashSeed(id) % sentences.length;
+    const idxB = (hashSeed(id + 'feat') + 1) % sentences.length;
+
+    const titleFromSentence = (sentence: string, salt: string) => {
+      const clause = sentence.split(/[,—–-]/)[0].trim();
+      if (clause.length >= 10 && clause.length <= 42) return clause;
+      const word = nameWords[hashSeed(id + salt) % Math.max(nameWords.length, 1)] || brandName;
+      return `${word} Detail`;
+    };
+
+    add(
+      titleFromSentence(sentences[idxA], 'a'),
+      sentences[idxA].length > 150 ? sentences[idxA].slice(0, 147) + '…' : sentences[idxA]
+    );
+
+    if (sentences.length > 1) {
+      const second = idxB !== idxA ? sentences[idxB] : sentences[(idxA + 1) % sentences.length];
+      add(
+        titleFromSentence(second, 'b'),
+        second.length > 150 ? second.slice(0, 147) + '…' : second
+      );
+    }
+  }
+
+  const isAudio =
+    nameLower.includes('headphone') ||
+    nameLower.includes('earbud') ||
+    nameLower.includes('earphone') ||
+    nameLower.includes('speaker') ||
+    nameLower.includes('airpod') ||
+    (nameLower.includes('wireless') && (cat.includes('mobile') || cat.includes('electronic') || cat.includes('accessories')));
+
+  const isWatch = cat.includes('watch') || nameLower.includes('watch');
+  const isClothing =
+    cat.includes('wear') || cat.includes('clothing') || cat.includes('shirt') ||
+    cat.includes('tops') || cat.includes('dresses') || cat.includes('classic-wear');
+  const isFootwear = cat.includes('shoe') || cat.includes('sneaker') || nameLower.includes('sneaker') || nameLower.includes('run');
+  const isDecor = cat.includes('furniture') || cat.includes('decoration') || cat.includes('kitchen');
+  const isBeauty = cat.includes('fragrance') || cat.includes('beauty') || cat.includes('skin');
+
+  if (isAudio) {
+    if (specs['Driver Size']) {
+      add(
+        `${specs['Driver Size']} Driver Array`,
+        `The ${name} uses ${specs['Driver Size'].toLowerCase()} drivers calibrated by ${brandName} for balanced lows and crisp highs.`
+      );
+    }
+    if (nameLower.includes('noise') || nameLower.includes('cancel') || nameLower.includes('anc')) {
+      add(
+        'Active Noise Cancellation',
+        `Real-time ambient monitoring on the ${name} filters engine hum, office chatter, and transit noise.`
+      );
+    } else {
+      add(
+        'Sealed Acoustic Chamber',
+        `Closed-back design on the ${name} passively blocks distractions without extra power draw.`
+      );
+    }
+    if (specs['Battery Life']) {
+      add(
+        specs['Battery Life'],
+        `Up to ${specs['Battery Life'].toLowerCase()} of wireless playback — enough for a full work week between charges.`
+      );
+    } else if (specs['Charging']) {
+      add(
+        'Quick Charge',
+        `${specs['Charging']} on the ${name}: a short top-up delivers hours of listening.`
+      );
+    }
+    if (specs['Bluetooth']) {
+      add(
+        specs['Bluetooth'],
+        `${specs['Bluetooth']} multipoint pairing on the ${name} — switch between phone and laptop seamlessly.`
+      );
+    }
+    if (specs['Frequency']) {
+      add(
+        'Wide Frequency Response',
+        `${specs['Frequency']} range on the ${name} reproduces deep bass and airy treble with minimal distortion.`
+      );
+    }
+  } else if (isWatch) {
+    if (specs['Movement']) {
+      add(specs['Movement'], `${specs['Movement']} inside the ${name} keeps time accurate to within seconds per month.`);
+    }
+    if (specs['Water Resistance']) {
+      add(specs['Water Resistance'], `Rated ${specs['Water Resistance']} — the ${name} handles rain, hand-washing, and poolside wear.`);
+    }
+    if (specs['Strap Material']) {
+      add(
+        specs['Strap Material'].split(' ').slice(0, 2).join(' '),
+        `${specs['Strap Material']} strap on the ${name} softens with wear and resists cracking.`
+      );
+    }
+    if (specs['Dial Diameter'] || specs['Case Diameter']) {
+      const size = specs['Dial Diameter'] || specs['Case Diameter'];
+      add(`${size} Case`, `A ${size} profile on the ${name} sits flush under shirt cuffs and suit sleeves.`);
+    }
+    if (specs['Dial Window']) {
+      add('Sapphire Crystal', `${specs['Dial Window']} protects the ${name} face from scratches and daily knocks.`);
+    }
+  } else if (isClothing) {
+    const fabric = specs['Material'] || 'premium fabric';
+    add(
+      fabric.split(',')[0].slice(0, 30),
+      `${fabric} construction gives the ${name} a structured drape that holds shape after repeated wear.`
+    );
+    if (specs['Fit Type']) {
+      add(specs['Fit Type'], `${specs['Fit Type']} cut on the ${name} — tailored through the shoulders with room to move.`);
+    }
+    if (specs['Origin']) {
+      add('Heritage Finish', `${specs['Origin']} — each ${name} is finished by hand before final inspection.`);
+    }
+    if (specs['Breathability']) {
+      add('All-Day Comfort', `${specs['Breathability']} weave in the ${name} keeps you cool under layers.`);
+    }
+    const titleWords = name.split(' ').filter(w => w.length > 3).slice(0, 2);
+    if (titleWords.length > 0) {
+      add(
+        `${titleWords.join(' ')} Cut`,
+        `The ${name} silhouette is designed for versatile styling — office, weekend, or evening.`
+      );
+    }
+  } else if (isFootwear) {
+    if (specs['Upper Material']) {
+      add(specs['Upper Material'], `${specs['Upper Material']} upper on the ${name} flexes with your stride and vents heat.`);
+    }
+    if (specs['Midsole']) {
+      add(specs['Midsole'], `${specs['Midsole']} midsole in the ${name} absorbs impact on pavement and track.`);
+    }
+    if (specs['Outsole']) {
+      add(specs['Outsole'], `${specs['Outsole']} grips wet and dry surfaces — built into every ${name} pair.`);
+    }
+    if (specs['Weight']) {
+      add(specs['Weight'], `At ${specs['Weight'].toLowerCase()}, the ${name} reduces fatigue on long runs.`);
+    }
+  } else if (isDecor) {
+    if (specs['Material']) {
+      add(specs['Material'], `${specs['Material']} body on the ${name} — solid feel with a natural grain pattern.`);
+    }
+    if (specs['Finish']) {
+      add(specs['Finish'], `${specs['Finish']} coating on the ${name} resists water rings and daily scuffs.`);
+    }
+    if (specs['Dimensions']) {
+      add('Compact Footprint', `${specs['Dimensions']} — the ${name} fits standard shelves and bedside tables.`);
+    }
+    if (specs['Warranty']) {
+      add(specs['Warranty'], `${specs['Warranty']} coverage on the ${name} — structural defects repaired or replaced.`);
+    }
+  } else if (isBeauty) {
+    if (specs['Scent Family']) {
+      add(specs['Scent Family'], `${specs['Scent Family']} notes in ${name} open fresh and dry down warm on skin.`);
+    }
+    if (specs['Concentration']) {
+      add(specs['Concentration'], `${specs['Concentration']} formula — ${name} lasts 6–8 hours on pulse points.`);
+    }
+    if (specs['Volume']) {
+      add(specs['Volume'], `${specs['Volume']} bottle for the ${name} — travel-friendly with spray atomizer.`);
+    }
+  }
+
+  for (const [key, val] of specEntries) {
+    if (features.length >= 4) break;
+    if ([...usedTitles].some(t => t.includes(key.toLowerCase()))) continue;
+    add(key, `The ${name} ships with ${key.toLowerCase()} rated at ${val} — a ${brandName} specification.`);
+  }
+
+  if (features.length < 2) {
+    const word = nameWords[hashSeed(id) % Math.max(nameWords.length, 1)] || brandName;
+    add(
+      `${word} Edition`,
+      `${brandName} engineered the ${name} around ${word.toLowerCase()} — purpose-built for everyday use.`
+    );
+  }
+
+  return features.slice(0, 4);
+}
+
 function enrichProduct(product: Product): Product {
   const finalProduct = { ...product };
 
@@ -39,13 +254,15 @@ function enrichProduct(product: Product): Product {
     const cat = finalProduct.category.toLowerCase();
     const nameLower = finalProduct.name.toLowerCase();
 
-    if (cat.includes('smartphone') || cat.includes('tablet') || cat.includes('laptop') || cat.includes('electronic') || nameLower.includes('phone') || nameLower.includes('wireless') || nameLower.includes('earbuds') || nameLower.includes('mic')) {
+    if (cat.includes('smartphone') || cat.includes('tablet') || cat.includes('laptop') || cat.includes('electronic') || nameLower.includes('phone') || nameLower.includes('wireless') || nameLower.includes('earbuds') || nameLower.includes('mic') || nameLower.includes('headphone')) {
+      const brandLabel = finalProduct.brand || finalProduct.name.split(' ')[0];
       finalProduct.specifications = {
-        'Battery Life': 'Up to 24 hours of active use',
-        'Connectivity': 'Bluetooth 5.3 / Ultra-wideband Wi-Fi',
-        'Material': 'Polished Aerospace Aluminum',
-        'Charging': 'USB-C 30W Fast charging supported',
-        'Weight': '185g Lightweight'
+        'Driver Size': nameLower.includes('headphone') ? '40mm Dynamic' : '10mm Balanced Armature',
+        'Frequency': nameLower.includes('pro') || nameLower.includes('premium') ? '5Hz - 40kHz' : '20Hz - 20kHz',
+        'Bluetooth': `Version 5.${(hashSeed(finalProduct.id) % 2) + 2}`,
+        'Battery Life': nameLower.includes('wireless') ? `${20 + (hashSeed(finalProduct.id) % 25)} Hours` : 'Up to 12 Hours',
+        'Weight': `${160 + (hashSeed(finalProduct.id) % 120)}g`,
+        'Brand': brandLabel,
       };
     } else if (cat.includes('wear') || cat.includes('clothing') || cat.includes('mens-shirts') || cat.includes('tops') || cat.includes('dresses') || cat.includes('shirt') || cat.includes('classic-wear')) {
       finalProduct.specifications = {
@@ -80,58 +297,34 @@ function enrichProduct(product: Product): Product {
         'Skin Type': 'Hypoallergenic, suitable for all types'
       };
     } else {
+      const seed = hashSeed(finalProduct.id + finalProduct.name);
+      const highlight = nameWordsFrom(finalProduct.name, seed);
       finalProduct.specifications = {
-        'Material': 'Premium Grade Premium Materials',
-        'Authenticity': '100% Certified Brand Original',
-        'Design': 'Modern Ergonomic Concept',
-        'Origin': 'Imported Quality Checked',
-        'Warranty': '1-Year Global Warranty'
+        'Material': `${highlight} Grade Build`,
+        'Weight': `${140 + (seed % 800)}g`,
+        'Dimensions': `${10 + (seed % 25)} × ${8 + (seed % 18)} × ${4 + (seed % 12)} cm`,
+        'Warranty': `${1 + (seed % 3)}-Year Warranty`,
+        'Origin': ['Italy', 'Japan', 'Germany', 'Portugal'][seed % 4],
       };
     }
   }
 
-  if (!finalProduct.features || finalProduct.features.length === 0) {
-    const cat = finalProduct.category.toLowerCase();
-    const nameLower = finalProduct.name.toLowerCase();
-
-    if (cat.includes('smartphone') || cat.includes('tablet') || cat.includes('laptop') || cat.includes('electronic') || nameLower.includes('phone') || nameLower.includes('wireless') || nameLower.includes('earbuds') || nameLower.includes('mic')) {
-      finalProduct.features = [
-        {
-          title: 'Intelligent Active Mode',
-          description: 'Adapts dynamically to ambient sounds and your specific activity for optimal comfort and performance.'
-        },
-        {
-          title: 'Seamless Ecosystem',
-          description: 'Instant pairing and ultra-low latency connection with multiple devices simultaneously.'
-        }
-      ];
-    } else if (cat.includes('wear') || cat.includes('clothing') || cat.includes('mens-shirts') || cat.includes('tops') || cat.includes('dresses') || cat.includes('shirt') || cat.includes('classic-wear')) {
-      finalProduct.features = [
-        {
-          title: 'Premium Tailored Fit',
-          description: 'Expertly draped to sit comfortably and elegantly, complementing various body structures.'
-        },
-        {
-          title: 'Luxury Thread Count',
-          description: 'Woven with high-tensile sustainable fibers for an incredibly soft feel and lifetime durability.'
-        }
-      ];
-    } else {
-      finalProduct.features = [
-        {
-          title: 'Exquisite Craftsmanship',
-          description: 'Every single component is selected with care and finished meticulously for timeless appeal.'
-        },
-        {
-          title: 'Uncompromised Design',
-          description: 'A masterpiece created by leading industry designers to perfectly balance form and function.'
-        }
-      ];
-    }
+  const isCatalogItem = finalProduct.id.startsWith('sp-');
+  if (!isCatalogItem) {
+    finalProduct.features = buildProductFeatures(finalProduct);
+  } else if (!finalProduct.features?.length) {
+    finalProduct.features = buildProductFeatures(finalProduct);
   }
 
   return finalProduct;
 }
+
+function nameWordsFrom(name: string, seed: number): string {
+  const words = name.split(/[\s–-]+/).filter(w => w.length > 3);
+  return words[seed % Math.max(words.length, 1)] || 'Premium';
+}
+
+export { enrichProduct };
 
 const mapProduct = (item: any): Product => enrichProduct({
   id: item.id.toString(),
@@ -193,18 +386,12 @@ export async function fetchProducts(limit: number = 0): Promise<Product[]> {
     const fakeStorePromise = fetch(`https://fakestoreapi.com/products/category/men's clothing`).then(res => res.json());
     
     const [dummyData, fakeStoreData] = await Promise.all([dummyPromise, fakeStorePromise]);
-    
-    const isForbidden = (title: string) => {
-      const t = title.toLowerCase();
-      return (t.includes("mens casual") && t.includes("slim fit") && t.includes("t-shirt")) || 
-             t.includes("mens casual premium slim fit t-shirts");
-    };
 
     const products = dummyData.products
-      .filter((item: any) => !isForbidden(item.title))
+      .filter((item: any) => !blockedTitle(item.title))
       .map(mapProduct);
     const classicWear = fakeStoreData
-      .filter((item: any) => !isForbidden(item.title))
+      .filter((item: any) => !blockedTitle(item.title))
       .map(mapFakeStoreProduct);
     
     const combined = [...PRODUCTS, ...products, ...classicWear];
@@ -212,8 +399,7 @@ export async function fetchProducts(limit: number = 0): Promise<Product[]> {
       return combined.slice(0, limit);
     }
     return combined;
-  } catch (error) {
-    console.error("Failed to fetch products:", error);
+  } catch {
     return PRODUCTS;
   }
 }
@@ -221,8 +407,8 @@ export async function fetchProducts(limit: number = 0): Promise<Product[]> {
 export async function fetchProductById(id: string): Promise<Product | null> {
   try {
     
-    const mockProduct = PRODUCTS.find(p => p.id === id);
-    if (mockProduct) return mockProduct;
+    const catalogProduct = PRODUCTS.find(p => p.id === id);
+    if (catalogProduct) return catalogProduct;
 
     let item;
     if (id.startsWith('fs-')) {
@@ -230,10 +416,8 @@ export async function fetchProductById(id: string): Promise<Product | null> {
       const response = await fetch(`https://fakestoreapi.com/products/${realId}`);
       if (!response.ok) return null;
       item = await response.json();
-      
-      const t = item.title.toLowerCase();
-      if ((t.includes("mens casual") && t.includes("slim fit") && t.includes("t-shirt")) || 
-          t.includes("mens casual premium slim fit t-shirts")) {
+
+      if (blockedTitle(item.title)) {
         return null;
       }
       
@@ -243,16 +427,13 @@ export async function fetchProductById(id: string): Promise<Product | null> {
     const response = await fetch(`${BASE_URL}/products/${id}`);
     if (!response.ok) return null;
     item = await response.json();
-    
-    const t = item.title.toLowerCase();
-    if ((t.includes("mens casual") && t.includes("slim fit") && t.includes("t-shirt")) || 
-        t.includes("mens casual premium slim fit t-shirts")) {
+
+    if (blockedTitle(item.title)) {
       return null;
     }
     
     return mapProduct(item);
-  } catch (error) {
-    console.error(`Failed to fetch product ${id}:`, error);
+  } catch {
     return null;
   }
 }
@@ -262,8 +443,7 @@ export async function fetchCategories(): Promise<Category[]> {
     const response = await fetch(`${BASE_URL}/products/categories`);
     const data = await response.json();
     return data;
-  } catch (error) {
-    console.error("Failed to fetch categories:", error);
+  } catch {
     return [];
   }
 }
@@ -273,17 +453,10 @@ export async function fetchProductsByCategory(category: string): Promise<Product
     const response = await fetch(`${BASE_URL}/products/category/${category}`);
     const data = await response.json();
     
-    const isForbidden = (title: string) => {
-      const t = title.toLowerCase();
-      return (t.includes("mens casual") && t.includes("slim fit") && t.includes("t-shirt")) || 
-             t.includes("mens casual premium slim fit t-shirts");
-    };
-
     return data.products
-      .filter((item: any) => !isForbidden(item.title))
+      .filter((item: any) => !blockedTitle(item.title))
       .map(mapProduct);
-  } catch (error) {
-    console.error(`Failed to fetch products for category ${category}:`, error);
+  } catch {
     return [];
   }
 }

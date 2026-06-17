@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Search, Star, Filter, ChevronLeft, ChevronRight, ShoppingBag, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Search, Star, Filter, ChevronLeft, ChevronRight, ShoppingBag, ChevronDown, GitCompareArrows } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import { fetchProducts, fetchCategories } from '../lib/api';
+import { useProducts, useCategories } from '../hooks/useProductQueries';
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
-import { Product, Category } from '../types';
+import { useComparison } from '../context/ComparisonContext';
+import { Product } from '../types';
 import { Heart } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
 
@@ -15,9 +16,8 @@ export default function Shop() {
  const initialCategory = searchParams.get('category') || 'all';
  const initialSearch = searchParams.get('search') || '';
  
- const [products, setProducts] = useState<Product[]>([]);
- const [categories, setCategories] = useState<{name: string, slug: string}[]>([{name: 'All Products', slug: 'all'}]);
- const [loading, setLoading] = useState(true);
+ const { data: products = [], isLoading: loading } = useProducts();
+ const { data: categoriesData = [] } = useCategories();
  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
  const [searchQuery, setSearchQuery] = useState(initialSearch);
  const [maxPrice, setMaxPrice] = useState(3000);
@@ -25,6 +25,7 @@ export default function Shop() {
  const [sortBy, setSortBy] = useState('Most Coveted');
  const { addToCart, cart } = useCart();
  const { toggleFavorite, isFavorite } = useFavorites();
+ const { toggleCompare, isInCompare } = useComparison();
 
  const categoryLabels: Record<string, { title: string; description: string }> = {
   all: { title: 'The Collection', description: 'Browse all Shopix products: premium fashion, electronics, and home décor. Curated world-class pieces for the modern lifestyle.' },
@@ -63,34 +64,18 @@ export default function Shop() {
  }
  }, [searchParams]);
 
- useEffect(() => {
- async function loadData() {
- try {
- const [productsData, categoriesData] = await Promise.all([
- fetchProducts(),
- fetchCategories()
- ]);
- setProducts(productsData);
+ const categories = useMemo(() => {
  const manualCategories = [
  {name: 'All Products', slug: 'all'}, 
  {name: 'Classic Wear', slug: 'classic-wear'},
  {name: 'Home Decoration', slug: 'home-decoration'},
  ];
-
  const manualSlugs = manualCategories.map(c => c.slug);
  const filteredApiCategories = categoriesData
  .filter(c => !manualSlugs.includes(c.slug))
  .map(c => ({ name: c.name, slug: c.slug }));
-
- setCategories([...manualCategories, ...filteredApiCategories]);
- } catch (error) {
- console.error('Error fetching data:', error);
- } finally {
- setLoading(false);
- }
- }
- loadData();
- }, []);
+ return [...manualCategories, ...filteredApiCategories];
+ }, [categoriesData]);
 
  const getCategoryTheme = (slug: string) => {
  const themes: Record<string, { title: string, subtitle: string, image: string }> = {
@@ -356,6 +341,17 @@ export default function Shop() {
  )}
  >
  <Heart className={cn("w-4 h-4", isFavorite(product.id) &&"fill-current")} />
+ </motion.button>
+
+ <motion.button 
+ whileHover={{ scale: 1.15 }}
+ whileTap={{ scale: 0.9 }}
+ onClick={() => toggleCompare(product)}
+ className={cn("absolute top-4 left-4 p-2.5 backdrop-blur-sm rounded-full transition-all duration-500 shadow-xl z-20",
+ isInCompare(product.id) ?"bg-primary text-white opacity-100" :"bg-surface/90 text-on-surface opacity-0 group-hover/item:opacity-100 hover:bg-primary hover:text-white"
+ )}
+ >
+ <GitCompareArrows className="w-4 h-4" />
  </motion.button>
 
  <div className="absolute inset-0 flex items-end p-6 opacity-0 group-hover/item:opacity-100 transition-all duration-700 ease-out z-10 bg-gradient-to-t from-black/20 to-transparent">

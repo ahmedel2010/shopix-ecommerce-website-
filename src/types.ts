@@ -35,3 +35,16 @@ export interface Order {
   total: number;
   items: CartItem[];
 }
+
+export type CouponType = 'percentage' | 'fixed' | 'free_shipping';
+
+export interface Coupon {
+  code: string;
+  label: string;
+  type: CouponType;
+  value: number;
+  minOrder?: number;
+  maxDiscount?: number;
+  category?: string;
+  description: string;
+}

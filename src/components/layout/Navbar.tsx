@@ -1,40 +1,38 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Heart, Bell, ShoppingCart, Menu, Sun, Moon, Search as SearchIcon, ArrowRight, X } from 'lucide-react';
+import { Search, Heart, ShoppingCart, Menu, Sun, Moon, Search as SearchIcon, ArrowRight, X, GitCompareArrows, User } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '../../lib/utils';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../context/FavoritesContext';
+import { useComparison } from '../../context/ComparisonContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { Product } from '../../types';
-import { fetchProducts } from '../../lib/api';
+import { useProducts } from '../../hooks/useProductQueries';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Navbar() {
  const [searchQuery, setSearchQuery] = useState('');
  const [results, setResults] = useState<Product[]>([]);
- const [allProducts, setAllProducts] = useState<Product[]>([]);
+ const { data: allProducts = [] } = useProducts();
  const [isSearchActive, setIsSearchActive] = useState(false);
  const [loading, setLoading] = useState(false);
  const [activeIndex, setActiveIndex] = useState(-1);
  
  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+ const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
  
  const searchContainerRef = useRef<HTMLDivElement>(null);
+ const userMenuRef = useRef<HTMLDivElement>(null);
  const inputRef = useRef<HTMLInputElement>(null);
  
  const location = useLocation();
  const navigate = useNavigate();
  const { totalItems } = useCart();
  const { totalFavorites } = useFavorites();
+ const { compareList } = useComparison();
  const { theme, toggleTheme } = useTheme();
-
- useEffect(() => {
- async function loadProducts() {
- const products = await fetchProducts();
- setAllProducts(products);
- }
- loadProducts();
- }, []);
+ const { user, isAuthenticated, logout } = useAuth();
 
  useEffect(() => {
  function handleClickOutside(event: MouseEvent) {
@@ -45,6 +43,9 @@ export default function Navbar() {
  !target.closest('#mobile-search-btn')
  ) {
  setIsSearchActive(false);
+ }
+ if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+ setIsUserMenuOpen(false);
  }
  }
  document.addEventListener('mousedown', handleClickOutside);
@@ -268,6 +269,64 @@ export default function Navbar() {
  </span>
  )}
  </Link>
+ <Link to={compareList.length > 0 ? `/compare?ids=${compareList.map(p => p.id).join(',')}` : '/compare'} className="relative hover:text-on-surface transition-colors group hidden sm:block">
+ <GitCompareArrows className="w-5 h-5 transition-transform group-hover:scale-110" />
+ {compareList.length > 0 && (
+ <span className="absolute -top-2 -right-2 bg-on-surface text-surface text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+ {compareList.length}
+ </span>
+ )}
+ </Link>
+
+ <div className="relative hidden sm:block" ref={userMenuRef}>
+ {isAuthenticated && user ? (
+ <>
+ <button
+ onClick={() => setIsUserMenuOpen(v => !v)}
+ className="flex items-center gap-2 hover:text-on-surface transition-colors text-on-surface-variant"
+ aria-label="Account menu"
+ >
+ <User className="w-5 h-5" />
+ <span className="text-[10px] font-bold uppercase max-w-[72px] truncate hidden lg:inline">
+ {user.firstName}
+ </span>
+ </button>
+ <AnimatePresence>
+ {isUserMenuOpen && (
+ <motion.div
+ initial={{ opacity: 0, y: 8 }}
+ animate={{ opacity: 1, y: 0 }}
+ exit={{ opacity: 0, y: 8 }}
+ className="absolute right-0 top-full mt-3 w-48 bg-surface-container border border-outline-variant shadow-xl z-[100] py-2"
+ >
+ <div className="px-4 py-2 border-b border-outline-variant">
+ <p className="text-xs font-bold text-on-surface truncate">{user.firstName} {user.lastName}</p>
+ <p className="text-[10px] text-on-surface-variant truncate">{user.email}</p>
+ </div>
+ <Link
+ to="/account"
+ onClick={() => setIsUserMenuOpen(false)}
+ className="block px-4 py-2.5 text-[10px] font-bold uppercase text-on-surface hover:bg-surface-container-high"
+ >
+ My account
+ </Link>
+ <button
+ onClick={() => { logout(); setIsUserMenuOpen(false); }}
+ className="w-full text-left px-4 py-2.5 text-[10px] font-bold uppercase text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+ >
+ Sign out
+ </button>
+ </motion.div>
+ )}
+ </AnimatePresence>
+ </>
+ ) : (
+ <Link to="/login" className="hover:text-on-surface transition-colors group" aria-label="Sign in">
+ <User className="w-5 h-5 transition-transform group-hover:scale-110" />
+ </Link>
+ )}
+ </div>
+
  <Link to="/cart" className="relative text-on-surface group">
  <ShoppingCart className="w-6 h-6 transition-transform group-hover:scale-110" />
  {totalItems > 0 && (
@@ -316,6 +375,38 @@ export default function Navbar() {
  >
  Favorites {totalFavorites > 0 && `(${totalFavorites})`}
  </Link>
+ <Link
+ to={compareList.length > 0 ? `/compare?ids=${compareList.map(p => p.id).join(',')}` : '/compare'}
+ onClick={() => setIsMobileMenuOpen(false)}
+ className="text-sm uppercase font-bold transition-all text-on-surface-variant hover:text-on-surface flex items-center gap-2"
+ >
+ Compare {compareList.length > 0 && `(${compareList.length})`}
+ </Link>
+ {isAuthenticated ? (
+ <>
+ <Link
+ to="/account"
+ onClick={() => setIsMobileMenuOpen(false)}
+ className="text-sm uppercase font-bold transition-all text-on-surface-variant hover:text-on-surface"
+ >
+ My account
+ </Link>
+ <button
+ onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+ className="text-sm uppercase font-bold transition-all text-on-surface-variant hover:text-on-surface text-left"
+ >
+ Sign out
+ </button>
+ </>
+ ) : (
+ <Link
+ to="/login"
+ onClick={() => setIsMobileMenuOpen(false)}
+ className="text-sm uppercase font-bold transition-all text-on-surface-variant hover:text-on-surface"
+ >
+ Sign in
+ </Link>
+ )}
  </motion.div>
  )}
  </AnimatePresence>

@@ -1,144 +1,217 @@
-# 🛍️ Shopix - Premium E-Commerce Platform
+# Shopix
 
-[![React](https://img.shields.io/badge/React-19-blue.svg?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-6.0-646CFF.svg?logo=vite)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-06B6D4.svg?logo=tailwindcss)](https://tailwindcss.com/)
-[![Motion](https://img.shields.io/badge/Motion-12.0-black.svg?logo=framer)](https://motion.dev/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-Shopix is a premium, modern, and fully interactive e-commerce web application. Built using **React 19**, **TypeScript**, and **Vite**, it leverages **Tailwind CSS v4** for clean, utility-first styling and **Motion** (Framer Motion) for beautiful, fluid micro-interactions and page transitions.
+A premium e-commerce storefront built with React 19, TypeScript, and Vite. Shopix combines a curated shopping experience with product comparison, member accounts, promo codes, and efficient data fetching through TanStack Query.
 
 ---
 
-## ✨ Key Features
+## Features
 
-- **🌓 Dynamic Light/Dark Mode:** Seamless theme switching with persistent user preference.
-- **🛒 Complete Cart Management:** Add to cart, adjust quantities, calculate totals dynamically, and clear cart.
-- **❤️ Favorites / Wishlist:** Bookmark favorite items with persistent local storage.
-- **🔍 Advanced Search & Filters:** Filter products by category, price range, sorting criteria, and direct text search on the Shop page.
-- **✨ Animated Micro-Interactions:** Smooth page transitions, hover effects, and interactive UI states powered by Motion.
-- **🔔 Custom Toast System:** Real-time feedback alerts for user actions (e.g., adding to cart, wishlist, checkout status).
-- **📋 Structured Checkout Flow:** Interactive multi-step checkout simulation with shipping details and order verification.
-- **📱 Fully Responsive Design:** Optimised for desktop, tablet, and mobile screens.
+### Shopping & Catalog
 
----
+- **Product catalog** — Browse items from DummyJSON and FakeStore API merged with curated in-house products.
+- **Category filtering** — Filter by collection, price, rating, and sort order on the Shop page.
+- **Live search** — Navbar search with instant suggestions across product names and categories.
+- **Product detail** — Image gallery, color variants, specifications, related products, and SEO metadata.
+- **Favorites** — Save items to a persistent wishlist via `localStorage`.
+- **Cart** — Add, update quantities, remove items, and view order summary.
 
+### Product Comparison
 
-### 🏠 Home Page - Hero & Banner
-Detailed view of the premium homepage introduction and hero slide.
-<img src="public/images/Screenshot%202026-06-17%20085100.png" alt="Home Hero Banner" width="100%"/>
+- Compare **up to 2 products** from the **same category** side by side.
+- Comparison bar stays visible while browsing; access the full table at `/compare`.
+- Compare specs, prices, ratings, and product-specific key features.
+- Selection persists across sessions via `localStorage`.
 
----
+### Authentication
 
-### 📂 Curated Categories Section
-Browse curated collections and product categories seamlessly.
-<img src="public/images/Screenshot%202026-06-17%20085129.png" alt="Categories" width="100%"/>
+- **Sign in** (`/login`) and **create account** (`/register`) with email and password validation.
+- **My Account** (`/account`) — protected route for profile management, cart summary, and saved items.
+- Session and user data stored client-side (`shopix-session`, `shopix-users`).
+- Navbar account menu with sign-in link or account dropdown when logged in.
 
----
+### Promo Codes & Coupons
 
-### 🌟 Featured Best Sellers
-Carousel of our highest-rated and top-selling products.
-<img src="public/images/Screenshot%202026-06-17%20085146.png" alt="Best Sellers" width="100%"/>
+- Apply promo codes at **Cart** and **Checkout**.
+- Supported codes include `WELCOME10`, `CLASSIC15`, `TECH20`, `SAVE25`, and `SHIPFREE`.
+- Validation covers minimum order value, category restrictions, percentage/fixed discounts, and free express shipping.
+- Active coupon persists in `localStorage` and revalidates when the cart changes.
+- Announcement bar highlights current offers site-wide.
 
----
+### Checkout & Orders
 
-### 🔍 Explore the Collection (Product Catalog)
-Dynamic filtering sidebar with responsive sorting options and search.
-<img src="public/images/Screenshot%202026-06-17%20085827.png" alt="Shop Catalog and Filters" width="100%"/>
+- Multi-step checkout layout: shipping, delivery method, and payment.
+- Order summary with tax, shipping, and applied discounts.
+- Frontend-only flow — no backend payment processing.
 
----
+### UX & Interface
 
-### ⚡ Interactive Search Overlay
-Fast predictive search dropdown showing matches as you type.
-<img src="public/images/Screenshot%202026-06-17%20090043.png" alt="Interactive Live Search" width="100%"/>
-
----
-
-### 🛒 Detailed Shopping Cart
-Full overview of items in the cart, item counter, quantity controls, and pricing summary sidebar.
-<img src="public/images/Screenshot%202026-06-17%20085939.png" alt="Shopping Cart Page" width="100%"/>
-
----
-
-## 🛠️ Tech Stack & Libraries
-
-- **Frontend Core:** [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/)
-- **Bundler & Tooling:** [Vite 6](https://vitejs.dev/)
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **Routing:** [React Router v7](https://reactrouter.com/)
-- **Animations:** [Motion (Framer Motion v12)](https://motion.dev/)
-- **Icons:** [Lucide React](https://lucide.dev/)
+- Light/dark theme with persistent preference.
+- Toast notifications for cart, favorites, comparison, auth, and coupon actions.
+- Motion-powered transitions and micro-interactions.
+- Fully responsive layout for mobile, tablet, and desktop.
+- SEO hooks with structured data on key pages.
 
 ---
 
-## 📂 Project Structure
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| UI | React 19, TypeScript |
+| Build | Vite 6 |
+| Styling | Tailwind CSS v4 |
+| Routing | React Router v7 |
+| Data fetching | [TanStack React Query v5](https://tanstack.com/query) |
+| Animation | Motion v12 |
+| Icons | Lucide React |
+
+### Data & State
+
+- **React Query** — Shared cache for products and categories (`useProducts`, `useProduct`, `useCategories`). Five-minute stale time reduces redundant API calls across Home, Shop, Product, Navbar, and Compare.
+- **React Context** — Cart, favorites, coupons, comparison, auth, theme, and toasts.
+- **localStorage** — Session, users, cart-related prefs, compare list, favorites, and active coupon.
+- **External APIs** — [DummyJSON](https://dummyjson.com), [FakeStore API](https://fakestoreapi.com).
+
+---
+
+## Project Structure
 
 ```text
-Shopix-ecommerce website/
-├── public/                 # Static assets
-├── src/
-│   ├── components/         # Reusable UI & Layout components
-│   │   ├── layout/         # Navbar, Footer
-│   │   └── ui/             # ScrollToTop, etc.
-│   ├── context/            # React Contexts (Cart, Favorites, Theme, Toast)
-│   ├── hooks/              # Custom React hooks
-│   ├── pages/              # Page components (Home, Shop, Product, Cart, etc.)
-│   ├── lib/                # Utility classes & helpers
-│   ├── App.tsx             # Main routing and wrapper layout
-│   ├── data.ts             # Static mock products and categories data
-│   ├── index.css           # Global styles and Tailwind imports
-│   ├── main.tsx            # Application entry point
-│   └── types.ts            # Shared TypeScript declarations
-├── tsconfig.json           # TypeScript configuration
-└── vite.config.ts          # Vite configuration
+src/
+├── components/
+│   ├── auth/           # AuthLayout, ProtectedRoute
+│   ├── layout/         # Navbar, Footer
+│   └── ui/             # CompareBar, PromoCodeInput, AnnouncementBar, ScrollToTop
+├── context/
+│   ├── AuthContext.tsx
+│   ├── CartContext.tsx
+│   ├── ComparisonContext.tsx
+│   ├── CouponContext.tsx
+│   ├── FavoritesContext.tsx
+│   ├── ThemeContext.tsx
+│   └── ToastContext.tsx
+├── data/
+│   └── coupons.ts      # Promo code definitions
+├── hooks/
+│   ├── useProductQueries.ts
+│   └── useSEO.ts
+├── lib/
+│   ├── api.ts          # Product fetching & enrichment
+│   ├── auth.ts         # Auth helpers
+│   ├── coupons.ts      # Coupon validation & discount logic
+│   ├── queryClient.ts
+│   └── queryKeys.ts
+├── pages/
+│   ├── Home.tsx
+│   ├── Shop.tsx
+│   ├── Product.tsx
+│   ├── Compare.tsx
+│   ├── Cart.tsx
+│   ├── Checkout.tsx
+│   ├── Favorites.tsx
+│   ├── Login.tsx
+│   ├── Register.tsx
+│   ├── Account.tsx
+│   ├── About.tsx
+│   └── Contact.tsx
+├── types/
+│   └── auth.ts
+├── App.tsx
+├── data.ts             # Curated catalog products
+├── main.tsx
+└── types.ts
 ```
 
 ---
 
-## 🚀 Getting Started
+## Routes
 
-Follow these steps to set up and run the project locally on your machine.
+| Path | Page | Access |
+|------|------|--------|
+| `/` | Home | Public |
+| `/shop` | Product catalog | Public |
+| `/product/:id` | Product detail | Public |
+| `/compare` | Product comparison | Public |
+| `/favorites` | Wishlist | Public |
+| `/cart` | Shopping cart | Public |
+| `/checkout` | Checkout | Public |
+| `/login` | Sign in | Public |
+| `/register` | Create account | Public |
+| `/account` | User profile | Protected |
+| `/about` | About | Public |
+| `/contact` | Contact | Public |
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-Ensure you have [Node.js](https://nodejs.org/) installed (recommended version `18.x` or higher).
+- [Node.js](https://nodejs.org/) 18 or later
 
 ### Installation
 
-1. **Clone the Repository:**
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/shopix-ecommerce-website.git
-   cd shopix-ecommerce-website
-   ```
+```bash
+git clone https://github.com/YOUR_USERNAME/shopix-ecommerce-website.git
+cd shopix-ecommerce-website
+npm install
+```
 
-2. **Install Dependencies:**
-   ```bash
-   npm install
-   ```
+### Environment
 
-3. **Configure Environment Variables:**
-   Duplicate the example file and customize it if needed:
-   ```bash
-   cp .env.example .env.local
-   ```
+Copy the example env file if you need to override the API base URL:
 
-4. **Start the Development Server:**
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:5173](http://localhost:5173) in your browser to view the application.
+```bash
+cp .env.example .env.local
+```
 
----
+### Development
 
-## 📦 Build & Deployment
+```bash
+npm run dev
+```
 
-To build the project for production:
+Open [http://localhost:5173](http://localhost:5173).
+
+### Production Build
 
 ```bash
 npm run build
+npm run preview   # optional — preview the production build locally
 ```
 
-The production assets will be generated in the `dist/` directory, ready to be hosted on Vercel, Netlify, or any static hosting platform.
+Output is written to `dist/` and can be deployed to Vercel, Netlify, or any static host.
 
+### Type Check
 
+```bash
+npm run lint
+```
+
+---
+
+## Screenshots
+
+### Home — Hero & Banner
+<img src="public/images/Screenshot%202026-06-17%20085100.png" alt="Home hero" width="100%"/>
+
+### Curated Categories
+<img src="public/images/Screenshot%202026-06-17%20085129.png" alt="Categories" width="100%"/>
+
+### Best Sellers
+<img src="public/images/Screenshot%202026-06-17%20085146.png" alt="Best sellers" width="100%"/>
+
+### Shop — Catalog & Filters
+<img src="public/images/Screenshot%202026-06-17%20085827.png" alt="Shop catalog" width="100%"/>
+
+### Live Search
+<img src="public/images/Screenshot%202026-06-17%20090043.png" alt="Search overlay" width="100%"/>
+
+### Shopping Cart
+<img src="public/images/Screenshot%202026-06-17%20085939.png" alt="Cart" width="100%"/>
+
+---
+
+## License
+
+MIT

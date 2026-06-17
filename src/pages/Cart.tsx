@@ -2,10 +2,13 @@ import { Minus, Plus, Trash2, ArrowRight, HelpCircle, ArrowLeft, ShoppingBag } f
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useCart } from '../context/CartContext';
+import { useCoupon } from '../context/CouponContext';
+import PromoCodeInput from '../components/ui/PromoCodeInput';
 import { useSEO } from '../hooks/useSEO';
 
 export default function Cart() {
  const { cart, updateQuantity, removeFromCart, totalPrice } = useCart();
+ const { discount, freeShipping } = useCoupon();
 
  useSEO({
   title: 'Your Cart',
@@ -13,7 +16,8 @@ export default function Cart() {
   noIndex: true,
  });
 
- const tax = totalPrice * 0.08;
+ const subtotalAfterDiscount = Math.max(totalPrice - discount, 0);
+ const tax = subtotalAfterDiscount * 0.08;
 
  return (
  <div className="max-w-7xl mx-auto px-4 md:px-10 py-16 w-full bg-surface transition-colors duration-300 text-on-surface">
@@ -118,6 +122,18 @@ export default function Cart() {
  <span>Subtotal</span>
  <span className="text-on-surface font-medium">${totalPrice.toFixed(2)}</span>
  </div>
+ {discount > 0 && (
+ <div className="flex justify-between text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase">
+ <span>Discount</span>
+ <span>−${discount.toFixed(2)}</span>
+ </div>
+ )}
+ {freeShipping && (
+ <div className="flex justify-between text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase">
+ <span>Express Shipping</span>
+ <span>Waived at checkout</span>
+ </div>
+ )}
  <div className="flex justify-between text-on-surface-variant text-xs font-bold uppercase">
  <span>Shipping</span>
  <span className="text-on-surface lowercase font-normal">Free</span>
@@ -129,26 +145,11 @@ export default function Cart() {
  
  <div className="pt-6 border-t border-outline-variant flex justify-between items-baseline">
  <span className="text-xs uppercase font-bold text-on-surface">Total</span>
- <span className="text-3xl font-regular text-on-surface">${(totalPrice + tax).toFixed(2)}</span>
+ <span className="text-3xl font-regular text-on-surface">${(subtotalAfterDiscount + tax).toFixed(2)}</span>
  </div>
  </div>
 
- 
- <div className="space-y-3 pt-4 border-t border-outline-variant/60">
- <label className="block text-[10px] uppercase font-bold text-on-surface-variant">
- Promo Key
- </label>
- <div className="flex">
- <input 
- type="text" 
- placeholder="ENTER CODE" 
- className="flex-grow border-b border-outline-variant bg-transparent py-2.5 focus:border-on-surface outline-none transition-all placeholder:text-on-surface-variant/30 text-on-surface text-xs font-medium" 
- />
- <button className="text-on-surface hover:text-on-surface-variant px-4 border-b border-outline-variant text-[10px] font-bold uppercase transition-colors">
- Apply
- </button>
- </div>
- </div>
+ <PromoCodeInput className="pt-4 border-t border-outline-variant/60" />
 
  <Link 
  to="/checkout" 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mail, Phone, MapPin, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
@@ -7,7 +7,6 @@ export default function Contact() {
  const [name, setName] = useState('');
  const [email, setEmail] = useState('');
  const [message, setMessage] = useState('');
- const [isSubmitting, setIsSubmitting] = useState(false);
  const [isSubmitted, setIsSubmitted] = useState(false);
  const [formError, setFormError] = useState('');
 
@@ -18,7 +17,7 @@ export default function Contact() {
   canonicalPath: '/contact',
  });
 
- const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = (e: FormEvent) => {
  e.preventDefault();
  if (!name || !email || !message) {
  setFormError('Please fill out all required fields.');
@@ -26,11 +25,6 @@ export default function Contact() {
  }
 
  setFormError('');
- setIsSubmitting(true);
-
- await new Promise((resolve) => setTimeout(resolve, 1200));
-
- setIsSubmitting(false);
  setIsSubmitted(true);
  };
 
@@ -46,7 +40,7 @@ export default function Contact() {
  <span className="font-semibold text-on-surface">conversation.</span>
  </h1>
  <p className="mt-8 text-base sm:text-lg text-on-surface-variant max-w-lg font-normal">
- Whether you have questions about our product Shopix, standard shipping timeframes, or custom orders, our team is here to assist.
+ Whether you need help with an order, shipping, or a product, our team will get back to you.
  </p>
  </div>
  </div>
@@ -186,7 +180,7 @@ export default function Contact() {
  id="form-email"
  value={email}
  onChange={(e) => setEmail(e.target.value)}
- placeholder="liam@example.com"
+ placeholder="jane@example.com"
  required
  className="w-full bg-transparent border-b border-outline-variant rounded-none py-3 text-sm focus:border-outline outline-none transition-colors text-on-surface font-medium placeholder-on-surface-variant/40"
  />
@@ -216,20 +210,10 @@ export default function Contact() {
 
  <button 
  type="submit"
- disabled={isSubmitting}
- className="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-[#00619E] text-on-primary py-4 px-6 rounded-none text-xs font-bold uppercase transition-colors duration-300 disabled:opacity-50"
+ className="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-[#00619E] text-on-primary py-4 px-6 rounded-none text-xs font-bold uppercase transition-colors duration-300"
  >
- {isSubmitting ? (
- <>
- <div className="animate-spin rounded-full h-3 w-3 border-2 border-on-primary border-t-transparent" />
- <span>Sending...</span>
- </>
- ) : (
- <>
  <span>Submit Message</span>
  <ArrowRight className="w-3.5 h-3.5" />
- </>
- )}
  </button>
 
  </form>
