@@ -50,8 +50,7 @@ export default function Login() {
               onChange={e => setEmail(e.target.value)}
               required
               autoComplete="email"
-              placeholder="you@example.com"
-              className="w-full bg-transparent border-none outline-none text-base text-on-surface placeholder:text-on-surface-variant/40 p-0"
+              className="w-full bg-transparent border-none outline-none text-base text-on-surface p-0"
             />
           </div>
 
@@ -72,8 +71,7 @@ export default function Login() {
               onChange={e => setPassword(e.target.value)}
               required
               autoComplete="current-password"
-              placeholder="••••••••"
-              className="w-full bg-transparent border-none outline-none text-base text-on-surface placeholder:text-on-surface-variant/40 p-0"
+              className="w-full bg-transparent border-none outline-none text-base text-on-surface p-0"
             />
           </div>
         </div>
