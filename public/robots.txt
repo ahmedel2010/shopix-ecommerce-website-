@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /shop
+Allow: /product/
+Allow: /about
+Allow: /contact
+Disallow: /cart
+Disallow: /checkout
+Disallow: /favorites
+Disallow: /*?*sort=
+Disallow: /*?*minRating=
+
+Sitemap: https://shopix-store.com/sitemap.xml
