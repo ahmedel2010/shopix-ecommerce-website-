@@ -1,16 +1,34 @@
 import React, { useState } from 'react';
 import { MapPin, Truck, CreditCard, Lock, ChevronRight, Phone, Info } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useCoupon } from '../context/CouponContext';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import PromoCodeInput from '../components/ui/PromoCodeInput';
 import { useSEO } from '../hooks/useSEO';
 
 export default function Checkout() {
  const { cart, totalPrice } = useCart();
  const { discount, freeShipping } = useCoupon();
+ const { isAuthenticated } = useAuth();
+ const toast = useToast();
+ const navigate = useNavigate();
  const [deliveryMethod, setDeliveryMethod] = useState<'standard' | 'express'>('standard');
+
+ // Form state
+ const [formData, setFormData] = useState({
+  firstName: '',
+  lastName: '',
+  address: '',
+  city: '',
+  postalCode: '',
+  phone: '',
+  cardNumber: '',
+  expiryDate: '',
+  cvv: '',
+ });
 
  const subtotalAfterDiscount = Math.max(totalPrice - discount, 0);
  const tax = subtotalAfterDiscount * 0.08;
@@ -22,6 +40,49 @@ export default function Checkout() {
   description: 'Complete your Shopix order securely. Fast shipping and encrypted payment processing.',
   noIndex: true,
  });
+
+ const handleInputChange = (field: keyof typeof formData, value: string) => {
+  let formattedValue = value;
+
+  if (field === 'cardNumber') {
+   // Remove all non-digits, then add space after every 4 digits
+   const digits = value.replace(/\D/g, '').slice(0, 16);
+   formattedValue = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+  } else if (field === 'expiryDate') {
+   // Remove non-digits, add slash after 2 digits
+   const digits = value.replace(/\D/g, '').slice(0, 4);
+   formattedValue = digits.replace(/(\d{2})(?=\d)/, '$1 / ');
+  } else if (field === 'cvv') {
+   // Only digits, max 3
+   formattedValue = value.replace(/\D/g, '').slice(0, 3);
+  }
+
+  setFormData(prev => ({ ...prev, [field]: formattedValue }));
+ };
+
+ const handleFinalizeOrder = () => {
+  // Validate all required fields using browser native validation
+  const allRequired = document.querySelectorAll('input[required]');
+  let isValid = true;
+  allRequired.forEach(input => {
+   if (!(input as HTMLInputElement).checkValidity()) {
+    (input as HTMLInputElement).reportValidity();
+    isValid = false;
+   }
+  });
+  if (!isValid) return;
+
+  // Check if user is authenticated
+  if (!isAuthenticated) {
+   toast.info('Please sign in to complete your order', 3500);
+   navigate('/login', { state: { from: '/checkout' } });
+   return;
+  }
+  
+  // Process the order
+  toast.success('Order placed successfully!', 3000);
+  console.log('Order finalized!', formData);
+ };
 
  return (
  <div className="max-w-7xl mx-auto px-4 md:px-10 py-20 w-full bg-surface transition-colors duration-300">
@@ -37,27 +98,69 @@ export default function Checkout() {
  <form className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-12">
  <div className="space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">First Name</label>
- <input type="text" placeholder="Ahmed" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input 
+  type="text" 
+  placeholder="Ahmed" 
+  value={formData.firstName}
+  onChange={(e) => handleInputChange('firstName', e.target.value)}
+  required
+  className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" 
+ />
  </div>
  <div className="space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Last Name</label>
- <input type="text" placeholder="Elsayed" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input 
+  type="text" 
+  placeholder="Elsayed" 
+  value={formData.lastName}
+  onChange={(e) => handleInputChange('lastName', e.target.value)}
+  required
+  className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" 
+ />
  </div>
  <div className="md:col-span-2 space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Address Line 1</label>
- <input type="text" placeholder="123 Ramadan Street" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input 
+  type="text" 
+  placeholder="123 Ramadan Street" 
+  value={formData.address}
+  onChange={(e) => handleInputChange('address', e.target.value)}
+  required
+  className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" 
+ />
  </div>
  <div className="space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">City</label>
- <input type="text" placeholder="Cairo" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input 
+  type="text" 
+  placeholder="Cairo" 
+  value={formData.city}
+  onChange={(e) => handleInputChange('city', e.target.value)}
+  required
+  className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" 
+ />
  </div>
  <div className="space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Postal Code</label>
- <input type="text" placeholder="11511" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input 
+  type="text" 
+  placeholder="11511" 
+  value={formData.postalCode}
+  onChange={(e) => handleInputChange('postalCode', e.target.value)}
+  required
+  className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" 
+ />
  </div>
  <div className="md:col-span-2 space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Phone Number</label>
- <input type="tel" placeholder="+20 101 234 5678" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input 
+  type="tel" 
+  placeholder="+20 101 234 5678" 
+  value={formData.phone}
+  onChange={(e) => handleInputChange('phone', e.target.value)}
+  required
+  className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" 
+ />
  </div>
  </form>
  </section>
@@ -107,15 +210,36 @@ export default function Checkout() {
  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-12 gap-x-10">
  <div className="md:col-span-2 space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Card Number</label>
- <input type="text" placeholder="0000 0000 0000 0000" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input 
+  type="text" 
+  placeholder="0000 0000 0000 0000" 
+  value={formData.cardNumber}
+  onChange={(e) => handleInputChange('cardNumber', e.target.value)}
+  required
+  className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" 
+ />
  </div>
  <div className="space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Expiry Date</label>
- <input type="text" placeholder="MM / YY" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input 
+  type="text" 
+  placeholder="MM / YY" 
+  value={formData.expiryDate}
+  onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+  required
+  className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" 
+ />
  </div>
  <div className="space-y-4 border-b border-outline-variant pb-2">
  <label className="text-[10px] uppercase text-on-surface-variant font-bold">Security Code</label>
- <input type="text" placeholder="CVV" className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" />
+ <input 
+  type="text" 
+  placeholder="CVV" 
+  value={formData.cvv}
+  onChange={(e) => handleInputChange('cvv', e.target.value)}
+  required
+  className="bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-lg w-full placeholder:text-on-surface-variant/30 text-on-surface" 
+ />
  </div>
  </div>
  </div>
@@ -171,8 +295,11 @@ export default function Checkout() {
 
  <PromoCodeInput />
 
- <button className="luxury-button w-full !py-6 text-sm">
- Finalize Order
+ <button 
+  onClick={handleFinalizeOrder}
+  className="luxury-button w-full !py-6 text-sm"
+ >
+  Finalize Order
  </button>
  <div className="flex items-center justify-center gap-3 text-on-surface-variant/40 text-[8px] uppercase font-bold">
  <Lock className="w-3 h-3" />
