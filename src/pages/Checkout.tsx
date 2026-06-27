@@ -55,6 +55,12 @@ export default function Checkout() {
   } else if (field === 'cvv') {
    // Only digits, max 3
    formattedValue = value.replace(/\D/g, '').slice(0, 3);
+  } else if (field === 'firstName' || field === 'lastName' || field === 'city') {
+   // Letters, spaces, and hyphens only (no numbers)
+   formattedValue = value.replace(/[^a-zA-Z\u0600-\u06FF\s-]/g, '');
+  } else if (field === 'postalCode' || field === 'phone') {
+   // Numbers only
+   formattedValue = value.replace(/\D/g, '');
   }
 
   setFormData(prev => ({ ...prev, [field]: formattedValue }));
